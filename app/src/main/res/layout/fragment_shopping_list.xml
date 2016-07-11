@@ -1,0 +1,55 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.epicodus.carezoneshoppingapp.ShoppingListFragment">
+
+    <ScrollView
+        android:layout_width = "match_parent"
+        android:layout_height = "match_parent"
+        android:id="@+id/shoppingListScrollView"
+        android:layout_above="@+id/addItemButton">
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:id="@+id/shoppingListTableLayout">
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Item"
+                    android:id="@+id/textView2"
+                    android:layout_column="1"
+                    android:layout_weight="0.5"
+                    android:gravity="center"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Category"
+                    android:id="@+id/textView3"
+                    android:layout_column="2"
+                    android:layout_weight="0.5"
+                    android:gravity="center"
+                    android:textSize="20sp" />
+            </TableRow>
+        </TableLayout>
+
+    </ScrollView>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Item"
+        android:id="@+id/addItemButton"
+        android:layout_alignParentBottom="true" />
+
+</RelativeLayout>
+
