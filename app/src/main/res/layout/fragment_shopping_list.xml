@@ -8,7 +8,7 @@
         android:layout_width = "match_parent"
         android:layout_height = "match_parent"
         android:id="@+id/shoppingListScrollView"
-        android:layout_above="@+id/addItemButton">
+        android:layout_above="@+id/buttonLayout">
 
         <TableLayout
             android:layout_width="match_parent"
@@ -44,12 +44,29 @@
 
     </ScrollView>
 
-    <Button
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Add Item"
-        android:id="@+id/addItemButton"
-        android:layout_alignParentBottom="true" />
+        android:layout_alignParentBottom="true"
+        android:id="@+id/buttonLayout">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear Database"
+            android:id="@+id/clearDatabaseButton"
+            android:layout_weight="0.5" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Item"
+            android:id="@+id/addItemButton"
+            android:layout_alignParentBottom="true"
+            android:layout_weight="0.5" />
+
+    </LinearLayout>
 
 </RelativeLayout>
 

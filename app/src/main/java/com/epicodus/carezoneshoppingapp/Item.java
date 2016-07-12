@@ -4,14 +4,14 @@ package com.epicodus.carezoneshoppingapp;
  * Created by Matt on 7/11/2016.
  */
 public class Item {
-    private int mId;
+    private long mId;
     private String mName;
     private String mCategory;
     private String mDateCreated;
     private String mUpdatedAt;
-    private int mUserId;
+    private long mUserId;
 
-    public Item(String name, String category, String dateCreated, int userId) {
+    public Item(String name, String category, String dateCreated, long userId) {
         mName = name;
         mCategory = category;
         mDateCreated = dateCreated;
@@ -19,7 +19,7 @@ public class Item {
         mUserId = userId;
     }
 
-    public int getId() {
+    public long getId() {
         return mId;
     }
 
@@ -39,11 +39,11 @@ public class Item {
         return mUpdatedAt;
     }
 
-    public int getUserId() {
+    public long getUserId() {
         return mUserId;
     }
 
-    public void setId(int mId) {
+    public void setId(long mId) {
         this.mId = mId;
     }
 
@@ -63,7 +63,7 @@ public class Item {
         this.mDateCreated = mDateCreated;
     }
 
-    public void setUserId(int mUserId) {
+    public void setUserId(long mUserId) {
         this.mUserId = mUserId;
     }
 }
