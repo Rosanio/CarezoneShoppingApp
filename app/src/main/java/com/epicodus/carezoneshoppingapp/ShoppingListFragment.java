@@ -16,6 +16,11 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
@@ -36,6 +41,7 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
         ButterKnife.bind(this, view);
         mAddItemButton.setOnClickListener(this);
         db = new DatabaseHelper(getActivity());
+        updateTable();
     }
 
     @Override
@@ -71,11 +77,12 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                     Toast.makeText(getActivity(), "Please enter a name and category", Toast.LENGTH_SHORT).show();
                 } else {
                     //Update local and online storage
-                    TableRow row = (TableRow) LayoutInflater.from(getActivity()).inflate(R.layout.item_table_row, null);
-                    ((TextView) row.findViewById(R.id.nameTextView)).setText(name);
-                    ((TextView) row.findViewById(R.id.categoryTextView)).setText(category);
-                    mShoppingListTableLayout.addView(row);
-                    Toast.makeText(getActivity(), "It works! " + name + " " + category , Toast.LENGTH_SHORT).show();
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
+                    Date date = new Date();
+                    String dateString = dateFormat.format(date);
+                    Item newItem = new Item(name, category, dateString, 1);
+                    db.logItems(newItem);
+                    updateTable();
                 }
             }
         });
@@ -88,5 +95,20 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
         });
 
         builder.show();
+    }
+
+    public void updateTable() {
+        mShoppingListTableLayout.removeAllViews();
+        List<Item> items = db.getAllItemRecords();
+        if(items.size() > 0) {
+            for(int i = 0; i < items.size(); i++) {
+                Item thisItem = items.get(i);
+                TableRow row = (TableRow) LayoutInflater.from(getActivity()).inflate(R.layout.item_table_row, null);
+                ((TextView) row.findViewById(R.id.nameTextView)).setText(thisItem.getName());
+                ((TextView) row.findViewById(R.id.categoryTextView)).setText(thisItem.getCategory());
+                mShoppingListTableLayout.addView(row);
+                Toast.makeText(getActivity(), "It works! " + thisItem.getName() + " " + thisItem.getCategory() , Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }
