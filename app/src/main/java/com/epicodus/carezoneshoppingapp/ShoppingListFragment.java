@@ -23,6 +23,8 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
     @Bind(R.id.addItemButton) Button mAddItemButton;
     @Bind(R.id.shoppingListTableLayout) TableLayout mShoppingListTableLayout;
 
+    private DatabaseHelper db;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_shopping_list, parent, false);
@@ -33,6 +35,7 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.bind(this, view);
         mAddItemButton.setOnClickListener(this);
+        db = new DatabaseHelper(getActivity());
     }
 
     @Override

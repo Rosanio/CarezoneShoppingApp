@@ -1,0 +1,69 @@
+package com.epicodus.carezoneshoppingapp;
+
+/**
+ * Created by Matt on 7/11/2016.
+ */
+public class Item {
+    private int mId;
+    private String mName;
+    private String mCategory;
+    private String mDateCreated;
+    private String mUpdatedAt;
+    private int mUserId;
+
+    public Item(String name, String category, String dateCreated, int userId) {
+        mName = name;
+        mCategory = category;
+        mDateCreated = dateCreated;
+        mUpdatedAt = mDateCreated;
+        mUserId = userId;
+    }
+
+    public int getId() {
+        return mId;
+    }
+
+    public String getName() {
+        return mName;
+    }
+
+    public String getDateCreated() {
+        return mDateCreated;
+    }
+
+    public String getCategory() {
+        return mCategory;
+    }
+
+    public String getUpdatedAt() {
+        return mUpdatedAt;
+    }
+
+    public int getUserId() {
+        return mUserId;
+    }
+
+    public void setId(int mId) {
+        this.mId = mId;
+    }
+
+    public void setName(String mName) {
+        this.mName = mName;
+    }
+
+    public void setCategory(String mCategory) {
+        this.mCategory = mCategory;
+    }
+
+    public void setUpdatedAt(String mUpdatedAt) {
+        this.mUpdatedAt = mUpdatedAt;
+    }
+
+    public void setDateCreated(String mDateCreated) {
+        this.mDateCreated = mDateCreated;
+    }
+
+    public void setUserId(int mUserId) {
+        this.mUserId = mUserId;
+    }
+}
