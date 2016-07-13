@@ -1,9 +1,15 @@
 package com.epicodus.carezoneshoppingapp;
 
+/*TODO:
+    Create post request to server
+    Create put and delete requests to server
+    Consider how to add items on server to database without creating dups
+    Maybe pull to refresh
+ */
+
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -104,7 +110,7 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                     SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
                     Date date = new Date();
                     String dateString = dateFormat.format(date);
-                    Item newItem = new Item(name, category, dateString, 1);
+                    Item newItem = new Item(name, category);
                     long itemId = db.logItems(newItem);
                     newItem.setId(itemId);
                     db.updateItem(newItem);
@@ -155,7 +161,6 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                     String dateString = dateFormat.format(date);
                     selectedItem.setName(name);
                     selectedItem.setCategory(category);
-                    selectedItem.setUpdatedAt(dateString);
                     db.updateItem(selectedItem);
                     selectedItem = null;
                     updateTable();
@@ -206,6 +211,7 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
     }
 
     public void getDataFromServer(Callback callback) {
+        //Used OkHttp because it is somewhat familiar and seems to work just fine for this purpose
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(1, TimeUnit.MINUTES)
                 .readTimeout(1, TimeUnit.MINUTES)

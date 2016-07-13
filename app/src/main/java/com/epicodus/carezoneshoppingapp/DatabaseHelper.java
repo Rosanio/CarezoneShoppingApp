@@ -28,9 +28,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_ITEM_ID = "_id";
     private static final String KEY_NAME = "name";
     private static final String KEY_CATEGORY = "category";
-    private static final String KEY_DATE_CREATED = "created_at";
-    private static final String KEY_UPDATED_AT = "updated_at";
-    private static final String KEY_USER_ID = "user_id";
 
     // Table Create Statements
 
@@ -38,10 +35,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String CREATE_TABLE_ITEM = "CREATE TABLE "
             + TABLE_ITEM + "(" + KEY_ITEM_ID + " INTEGER PRIMARY KEY,"
             + KEY_NAME + " TEXT,"
-            + KEY_CATEGORY + " TEXT,"
-            + KEY_DATE_CREATED + " TEXT,"
-            + KEY_UPDATED_AT + " TEXT,"
-            + KEY_USER_ID + " INTEGER" + ")";
+            + KEY_CATEGORY + " TEXT," + ")";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -72,9 +66,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(KEY_NAME, item.getName());
         values.put(KEY_CATEGORY, item.getCategory());
-        values.put(KEY_DATE_CREATED, item.getDateCreated());
-        values.put(KEY_UPDATED_AT, item.getUpdatedAt());
-        values.put(KEY_USER_ID, item.getUserId());
 
         //insert row
         long item_id = db.insert(TABLE_ITEM, null, values);
@@ -97,13 +88,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             c.moveToFirst();
         }
 
-        Item item = new Item("", "", "", 0);
+        Item item = new Item("", "");
         item.setId(c.getInt(c.getColumnIndex(KEY_ITEM_ID)));
         item.setName(c.getString(c.getColumnIndex(KEY_NAME)));
         item.setCategory((c.getString(c.getColumnIndex(KEY_CATEGORY))));
-        item.setDateCreated((c.getString(c.getColumnIndex(KEY_DATE_CREATED))));
-        item.setUpdatedAt(c.getString(c.getColumnIndex(KEY_UPDATED_AT)));
-        item.setUserId((c.getInt(c.getColumnIndex(KEY_USER_ID))));
         return item;
     }
 
@@ -122,13 +110,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         //looping through all rows and adding to list
         if (c.moveToFirst()) {
             do {
-                Item item = new Item("", "", "", 0);
+                Item item = new Item("", "");
                 item.setId(c.getInt(c.getColumnIndex(KEY_ITEM_ID)));
                 item.setName(c.getString(c.getColumnIndex(KEY_NAME)));
                 item.setCategory((c.getString(c.getColumnIndex(KEY_CATEGORY))));
-                item.setDateCreated((c.getString(c.getColumnIndex(KEY_DATE_CREATED))));
-                item.setUpdatedAt(c.getString(c.getColumnIndex(KEY_UPDATED_AT)));
-                item.setUserId((c.getInt(c.getColumnIndex(KEY_USER_ID))));
 
                 allItemRecords.add(item);
             } while (c.moveToNext());
@@ -145,9 +130,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(KEY_NAME, item.getName());
         values.put(KEY_CATEGORY, item.getCategory());
-        values.put(KEY_DATE_CREATED, item.getDateCreated());
-        values.put(KEY_UPDATED_AT, item.getUpdatedAt());
-        values.put(KEY_USER_ID, item.getUserId());
 
         //updating row
         return db.update(TABLE_ITEM, values, KEY_ITEM_ID + " = ?",
