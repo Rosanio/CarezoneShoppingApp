@@ -1,8 +1,5 @@
 package com.epicodus.carezoneshoppingapp;
 
-/**
- * Created by Matt on 7/11/2016.
- */
 public class Item {
     private long mId;
     private String mName;

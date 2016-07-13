@@ -16,13 +16,20 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class ShoppingListFragment extends Fragment implements View.OnClickListener {
     private List<Item> mItems;
@@ -169,6 +176,22 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
     public void updateTable() {
         mShoppingListTableLayout.removeAllViews();
         mItems = db.getAllItemRecords();
+        getDataFromServer(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try {
+                    String jsonData = response.body().string();
+                    Log.d("jsonData", jsonData);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
         if(mItems.size() > 0) {
             for(int i = 0; i < mItems.size(); i++) {
                 Item thisItem = mItems.get(i);
@@ -180,5 +203,21 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 row.setOnClickListener(this);
             }
         }
+    }
+
+    public void getDataFromServer(Callback callback) {
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(1, TimeUnit.MINUTES)
+                .readTimeout(1, TimeUnit.MINUTES)
+                .build();
+
+        Request request = new Request.Builder()
+                .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
+                .header("Accept", "application/json")
+                .url(Constants.BASE_URL)
+                .build();
+
+        Call call = client.newCall(request);
+        call.enqueue(callback);
     }
 }
