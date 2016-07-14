@@ -22,19 +22,23 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class ShoppingListFragment extends Fragment implements View.OnClickListener {
@@ -48,6 +52,9 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
 
     private Item selectedItem;
 
+    public static final MediaType JSON
+            = MediaType.parse("application/json; charset=utf-8");
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_shopping_list, parent, false);
@@ -60,7 +67,33 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
         mAddItemButton.setOnClickListener(this);
         mClearDatabaseButton.setOnClickListener(this);
         db = new DatabaseHelper(getActivity());
-        updateTable();
+        getDataFromServer(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                mItems = db.getAllItemRecords();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateTable();
+                    }
+                });
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String jsonData = response.body().string();
+                Log.d("jsonData", jsonData);
+                db.deleteAllItemRecords();
+                mItems = processJSON(jsonData);
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateTable();
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -103,16 +136,15 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 String name = nameEditText.getText().toString();
                 String category = categoryEditText.getText().toString();
 
-                if(name.trim().length() > 0 && category.trim().length() == 0) {
+                if(name.trim().length() == 0 && category.trim().length() == 0) {
                     Toast.makeText(getActivity(), "Please enter a name and category", Toast.LENGTH_SHORT).show();
                 } else {
                     //Update local and online storage
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
-                    Date date = new Date();
-                    String dateString = dateFormat.format(date);
                     Item newItem = new Item(name, category);
                     long itemId = db.logItems(newItem);
                     newItem.setId(itemId);
+                    String jsonString = makeJSONItem(newItem);
+                    postToServer(jsonString);
                     db.updateItem(newItem);
                     updateTable();
                 }
@@ -156,9 +188,6 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                     Toast.makeText(getActivity(), "Please enter a name and category", Toast.LENGTH_SHORT).show();
                 } else {
                     //Update local and online storage
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
-                    Date date = new Date();
-                    String dateString = dateFormat.format(date);
                     selectedItem.setName(name);
                     selectedItem.setCategory(category);
                     db.updateItem(selectedItem);
@@ -180,26 +209,14 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
 
     public void updateTable() {
         mShoppingListTableLayout.removeAllViews();
-        mItems = db.getAllItemRecords();
-        getDataFromServer(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                try {
-                    String jsonData = response.body().string();
-                    Log.d("jsonData", jsonData);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
         if(mItems.size() > 0) {
             for(int i = 0; i < mItems.size(); i++) {
                 Item thisItem = mItems.get(i);
+                long itemId = db.logItems(thisItem);
+                thisItem.setId(itemId);
+                db.updateItem(thisItem);
+                Log.d("updatedItemId", db.getItem(itemId).getId()+"");
                 TableRow row = (TableRow) LayoutInflater.from(getActivity()).inflate(R.layout.item_table_row, null);
                 ((TextView) row.findViewById(R.id.nameTextView)).setText(thisItem.getName());
                 ((TextView) row.findViewById(R.id.categoryTextView)).setText(thisItem.getCategory());
@@ -225,5 +242,69 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
 
         Call call = client.newCall(request);
         call.enqueue(callback);
+    }
+
+    public String makeJSONItem(Item item) {
+        JSONObject jsonItem = new JSONObject();
+        JSONObject itemObject = new JSONObject();
+
+        try {
+            itemObject.put("name", item.getName());
+            itemObject.put("category", item.getCategory());
+            jsonItem.put("item", itemObject);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.d("item", jsonItem.toString());
+        String jsonString = jsonItem.toString();
+        return jsonString;
+    }
+
+    public void postToServer(String jsonString) {
+        RequestBody body = RequestBody.create(JSON, jsonString);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(1, TimeUnit.MINUTES)
+                .readTimeout(1, TimeUnit.MINUTES)
+                .build();
+
+        Request request = new Request.Builder()
+                .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
+                .header("Accept", "application/json")
+                .header("Content-type", "application/json")
+                .url(Constants.BASE_URL)
+                .post(body)
+                .build();
+
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String jsonData = response.body().string();
+                Log.d("PostData", jsonData);
+            }
+        });
+    }
+
+    public ArrayList<Item> processJSON(String jsonString) {
+        ArrayList<Item> items = new ArrayList<>();
+        try {
+            JSONArray responseJSON = new JSONArray(jsonString);
+            for(int i = 0; i < responseJSON.length(); i++) {
+                JSONObject itemObject = responseJSON.getJSONObject(i);
+                String itemName = itemObject.getString("name");
+                String itemCategory = itemObject.getString("category");
+                Item item = new Item(itemName, itemCategory);
+                items.add(item);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return items;
     }
 }
