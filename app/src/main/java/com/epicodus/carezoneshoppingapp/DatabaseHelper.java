@@ -35,7 +35,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String CREATE_TABLE_ITEM = "CREATE TABLE "
             + TABLE_ITEM + "(" + KEY_ITEM_ID + " INTEGER PRIMARY KEY,"
             + KEY_NAME + " TEXT,"
-            + KEY_CATEGORY + " TEXT," + ")";
+            + KEY_CATEGORY + " TEXT" + ")";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);

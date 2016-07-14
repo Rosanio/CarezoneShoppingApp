@@ -1,9 +1,7 @@
 package com.epicodus.carezoneshoppingapp;
 
 /*TODO:
-    Create post request to server
     Create put and delete requests to server
-    Consider how to add items on server to database without creating dups
     Maybe pull to refresh
  */
 
@@ -42,18 +40,21 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class ShoppingListFragment extends Fragment implements View.OnClickListener {
-    private List<Item> mItems;
+
+    /*Globals*/
 
     @Bind(R.id.addItemButton) Button mAddItemButton;
-    @Bind(R.id.clearDatabaseButton) Button mClearDatabaseButton;
     @Bind(R.id.shoppingListTableLayout) TableLayout mShoppingListTableLayout;
 
     private DatabaseHelper db;
 
     private Item selectedItem;
+    private List<Item> mItems;
 
     public static final MediaType JSON
             = MediaType.parse("application/json; charset=utf-8");
+
+    /*Create View*/
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
@@ -65,36 +66,11 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.bind(this, view);
         mAddItemButton.setOnClickListener(this);
-        mClearDatabaseButton.setOnClickListener(this);
         db = new DatabaseHelper(getActivity());
-        getDataFromServer(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                mItems = db.getAllItemRecords();
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateTable();
-                    }
-                });
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String jsonData = response.body().string();
-                Log.d("jsonData", jsonData);
-                db.deleteAllItemRecords();
-                mItems = processJSON(jsonData);
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateTable();
-                    }
-                });
-            }
-        });
+        getDataFromServer();
     }
+
+    /*Click Listeners*/
 
     @Override
     public void onClick(View v) {
@@ -111,13 +87,12 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 db.deleteItemRecord(selectedItem.getId());
                 updateTable();
                 break;
-            case R.id.clearDatabaseButton:
-                db.deleteAllItemRecords();
-                updateTable();
             default:
                 break;
         }
     }
+
+    /*Create Dialog Functions*/
 
     public void openAddItemDialog() {
         LayoutInflater inflater = LayoutInflater.from(getActivity());
@@ -136,10 +111,9 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 String name = nameEditText.getText().toString();
                 String category = categoryEditText.getText().toString();
 
-                if(name.trim().length() == 0 && category.trim().length() == 0) {
+                if(name.trim().length() == 0 || category.trim().length() == 0) {
                     Toast.makeText(getActivity(), "Please enter a name and category", Toast.LENGTH_SHORT).show();
                 } else {
-                    //Update local and online storage
                     Item newItem = new Item(name, category);
                     long itemId = db.logItems(newItem);
                     newItem.setId(itemId);
@@ -207,8 +181,54 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
         builder.show();
     }
 
+    /*Get data and update view*/
+
+    public void getDataFromServer() {
+        //Used OkHttp because it is somewhat familiar and seems to work just fine for this purpose
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(1, TimeUnit.MINUTES)
+                .readTimeout(1, TimeUnit.MINUTES)
+                .build();
+
+        Request request = new Request.Builder()
+                .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
+                .header("Accept", "application/json")
+                .url(Constants.BASE_URL)
+                .build();
+
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                mItems = db.getAllItemRecords();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateTable();
+                    }
+                });
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String jsonData = response.body().string();
+                Log.d("jsonData", jsonData);
+                db.deleteAllItemRecords();
+                mItems = processJSON(jsonData);
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateTable();
+                    }
+                });
+            }
+        });
+    }
+
     public void updateTable() {
         mShoppingListTableLayout.removeAllViews();
+        Log.d("deleting", mItems.size()+"");
 
         if(mItems.size() > 0) {
             for(int i = 0; i < mItems.size(); i++) {
@@ -227,22 +247,24 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
         }
     }
 
-    public void getDataFromServer(Callback callback) {
-        //Used OkHttp because it is somewhat familiar and seems to work just fine for this purpose
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.MINUTES)
-                .readTimeout(1, TimeUnit.MINUTES)
-                .build();
-
-        Request request = new Request.Builder()
-                .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
-                .header("Accept", "application/json")
-                .url(Constants.BASE_URL)
-                .build();
-
-        Call call = client.newCall(request);
-        call.enqueue(callback);
+    public ArrayList<Item> processJSON(String jsonString) {
+        ArrayList<Item> items = new ArrayList<>();
+        try {
+            JSONArray responseJSON = new JSONArray(jsonString);
+            for(int i = 0; i < responseJSON.length(); i++) {
+                JSONObject itemObject = responseJSON.getJSONObject(i);
+                String itemName = itemObject.getString("name");
+                String itemCategory = itemObject.getString("category");
+                Item item = new Item(itemName, itemCategory);
+                items.add(item);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return items;
     }
+
+    /*Post Data*/
 
     public String makeJSONItem(Item item) {
         JSONObject jsonItem = new JSONObject();
@@ -287,24 +309,8 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
             public void onResponse(Call call, Response response) throws IOException {
                 String jsonData = response.body().string();
                 Log.d("PostData", jsonData);
+                getDataFromServer();
             }
         });
-    }
-
-    public ArrayList<Item> processJSON(String jsonString) {
-        ArrayList<Item> items = new ArrayList<>();
-        try {
-            JSONArray responseJSON = new JSONArray(jsonString);
-            for(int i = 0; i < responseJSON.length(); i++) {
-                JSONObject itemObject = responseJSON.getJSONObject(i);
-                String itemName = itemObject.getString("name");
-                String itemCategory = itemObject.getString("category");
-                Item item = new Item(itemName, itemCategory);
-                items.add(item);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return items;
     }
 }
