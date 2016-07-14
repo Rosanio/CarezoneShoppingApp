@@ -4,6 +4,7 @@ public class Item {
     private long mId;
     private String mName;
     private String mCategory;
+    private long mServerId;
 
     public Item(String name, String category) {
         mName = name;
@@ -32,5 +33,13 @@ public class Item {
 
     public void setId(long id) {
         this.mId = id;
+    }
+
+    public long getServerId() {
+        return mServerId;
+    }
+
+    public void setServerId(long serverId) {
+        this.mServerId = serverId;
     }
 }

@@ -3,6 +3,7 @@ package com.epicodus.carezoneshoppingapp;
 /*TODO:
     Create put and delete requests to server
     Maybe pull to refresh
+    Make id in sqlite database reflect id assigned to item on server
  */
 
 import android.content.DialogInterface;
@@ -236,7 +237,7 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 long itemId = db.logItems(thisItem);
                 thisItem.setId(itemId);
                 db.updateItem(thisItem);
-                Log.d("updatedItemId", db.getItem(itemId).getId()+"");
+                Log.d("updatedItemId", thisItem.getServerId()+"");
                 TableRow row = (TableRow) LayoutInflater.from(getActivity()).inflate(R.layout.item_table_row, null);
                 ((TextView) row.findViewById(R.id.nameTextView)).setText(thisItem.getName());
                 ((TextView) row.findViewById(R.id.categoryTextView)).setText(thisItem.getCategory());
@@ -255,7 +256,9 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 JSONObject itemObject = responseJSON.getJSONObject(i);
                 String itemName = itemObject.getString("name");
                 String itemCategory = itemObject.getString("category");
+                long serverId = itemObject.getLong("id");
                 Item item = new Item(itemName, itemCategory);
+                item.setServerId(serverId);
                 items.add(item);
             }
         } catch (JSONException e) {
