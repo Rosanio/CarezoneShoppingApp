@@ -121,7 +121,6 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                     String jsonString = makeJSONItem(newItem);
                     postToServer(jsonString);
                     db.updateItem(newItem);
-                    updateTable();
                 }
             }
         });
@@ -163,11 +162,13 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                     Toast.makeText(getActivity(), "Please enter a name and category", Toast.LENGTH_SHORT).show();
                 } else {
                     //Update local and online storage
+                    Item updatedItem = new Item(name, category);
+                    String jsonString = makeJSONItem(updatedItem);
+                    updateItem(jsonString, selectedItem.getServerId());
                     selectedItem.setName(name);
                     selectedItem.setCategory(category);
                     db.updateItem(selectedItem);
                     selectedItem = null;
-                    updateTable();
                 }
             }
         });
@@ -194,7 +195,7 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
         Request request = new Request.Builder()
                 .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
                 .header("Accept", "application/json")
-                .url(Constants.BASE_URL)
+                .url(Constants.BASE_URL + Constants.FOOTER)
                 .build();
 
         Call call = client.newCall(request);
@@ -297,8 +298,43 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
                 .header("Accept", "application/json")
                 .header("Content-type", "application/json")
-                .url(Constants.BASE_URL)
+                .url(Constants.BASE_URL + Constants.FOOTER)
                 .post(body)
+                .build();
+
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String jsonData = response.body().string();
+                Log.d("PostData", jsonData);
+                getDataFromServer();
+            }
+        });
+    }
+
+    /*Update Data*/
+
+    public void updateItem(String jsonString, long itemId) {
+        RequestBody body = RequestBody.create(JSON, jsonString);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(1, TimeUnit.MINUTES)
+                .readTimeout(1, TimeUnit.MINUTES)
+                .build();
+        Log.d("url", Constants.BASE_URL + "/" + itemId + Constants.FOOTER);
+
+        Request request = new Request.Builder()
+                .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
+                .header("Accept", "application/json")
+                .header("Content-type", "application/json")
+                .url(Constants.BASE_URL + "/" + itemId + Constants.FOOTER)
+                .put(body)
                 .build();
 
         Call call = client.newCall(request);
