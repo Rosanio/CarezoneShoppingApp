@@ -55,6 +55,22 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
     public static final MediaType JSON
             = MediaType.parse("application/json; charset=utf-8");
 
+    private OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(1, TimeUnit.MINUTES)
+            .readTimeout(1, TimeUnit.MINUTES)
+            .build();
+    private Callback postCallback = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+            e.printStackTrace();
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            getDataFromServer();
+        }
+    };
+
     /*Create View*/
 
     @Override
@@ -85,8 +101,8 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 openUpdateItemDialog();
                 break;
             case R.id.deleteItemButton:
+                deleteItem(selectedItem.getServerId());
                 db.deleteItemRecord(selectedItem.getId());
-                updateTable();
                 break;
             default:
                 break;
@@ -186,12 +202,6 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
     /*Get data and update view*/
 
     public void getDataFromServer() {
-        //Used OkHttp because it is somewhat familiar and seems to work just fine for this purpose
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.MINUTES)
-                .readTimeout(1, TimeUnit.MINUTES)
-                .build();
-
         Request request = new Request.Builder()
                 .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
                 .header("Accept", "application/json")
@@ -289,11 +299,6 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
     public void postToServer(String jsonString) {
         RequestBody body = RequestBody.create(JSON, jsonString);
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.MINUTES)
-                .readTimeout(1, TimeUnit.MINUTES)
-                .build();
-
         Request request = new Request.Builder()
                 .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
                 .header("Accept", "application/json")
@@ -303,31 +308,13 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 .build();
 
         Call call = client.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String jsonData = response.body().string();
-                Log.d("PostData", jsonData);
-                getDataFromServer();
-            }
-        });
+        call.enqueue(postCallback);
     }
 
     /*Update Data*/
 
     public void updateItem(String jsonString, long itemId) {
         RequestBody body = RequestBody.create(JSON, jsonString);
-
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.MINUTES)
-                .readTimeout(1, TimeUnit.MINUTES)
-                .build();
-        Log.d("url", Constants.BASE_URL + "/" + itemId + Constants.FOOTER);
 
         Request request = new Request.Builder()
                 .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
@@ -338,18 +325,17 @@ public class ShoppingListFragment extends Fragment implements View.OnClickListen
                 .build();
 
         Call call = client.newCall(request);
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                e.printStackTrace();
-            }
+        call.enqueue(postCallback);
+    }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                String jsonData = response.body().string();
-                Log.d("PostData", jsonData);
-                getDataFromServer();
-            }
-        });
+    public void deleteItem(long itemId) {
+        Request request = new Request.Builder()
+                .header("X-CZ-Authorization", Constants.AUTH_TOKEN)
+                .url(Constants.BASE_URL + "/" + itemId + Constants.FOOTER)
+                .delete()
+                .build();
+
+        Call call = client.newCall(request);
+        call.enqueue(postCallback);
     }
 }
